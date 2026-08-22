@@ -16,6 +16,7 @@
   <img src="https://img.shields.io/badge/React_Native-0.81.5-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React Native" />
   <img src="https://img.shields.io/badge/Expo-SDK_54-000000?style=for-the-badge&logo=expo&logoColor=white" alt="Expo" />
   <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/AI-Offline_Neural_Engine-8B5CF6?style=for-the-badge&logo=openai&logoColor=white" alt="Offline Neural Engine" />
   <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android-10B981?style=for-the-badge&logo=android&logoColor=white" alt="Platform" />
   <img src="https://img.shields.io/badge/Privacy-100%25%20On--Device-10B981?style=for-the-badge&logo=shield&logoColor=white" alt="Privacy" />
 </p>
@@ -61,6 +62,7 @@ Ask **Pangly** anything in plain language—such as *"When is my next vehicle oi
 
 * **Core Platform**: React Native (0.81.5) & Expo (SDK 54)
 * **Language**: TypeScript (Strict Type Safety)
+* **AI & Intelligence**: 100% Offline Neural Assistant & Context Retrieval Engine
 * **Security & Authentication**: Hardware-backed biometric authentication (Face ID / Touch ID / Fingerprint)
 * **Storage & Encryption**: Encrypted client-side isolated storage sandbox
 * **Interface & Motion**: Lucide vector icons & Native Animated Driver
