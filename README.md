@@ -13,9 +13,11 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android-10B981?style=for-the-badge&logo=android" alt="Platforms" />
-  <img src="https://img.shields.io/badge/Security-Hardware%20Biometrics-3178C6?style=for-the-badge&logo=lock" alt="Security" />
-  <img src="https://img.shields.io/badge/Privacy-100%25%20On--Device-10B981?style=for-the-badge&logo=shield" alt="Privacy" />
+  <img src="https://img.shields.io/badge/React_Native-0.81.5-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React Native" />
+  <img src="https://img.shields.io/badge/Expo-SDK_54-000000?style=for-the-badge&logo=expo&logoColor=white" alt="Expo" />
+  <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android-10B981?style=for-the-badge&logo=android&logoColor=white" alt="Platform" />
+  <img src="https://img.shields.io/badge/Privacy-100%25%20On--Device-10B981?style=for-the-badge&logo=shield&logoColor=white" alt="Privacy" />
 </p>
 
 ---
@@ -52,6 +54,16 @@ Ask **Pangly** anything in plain language—such as *"When is my next vehicle oi
 * **Zero Cloud Dependence**: No external servers, no tracking endpoints, and no remote backups.
 * **Isolated Sandbox**: Document photos are kept in private sandbox storage, completely hidden from your public photo gallery.
 * **Offline Master Recovery Phrase**: Complete vault ownership without relying on third-party accounts or reset links.
+
+---
+
+## Built With
+
+* **Core Platform**: React Native (0.81.5) & Expo (SDK 54)
+* **Language**: TypeScript (Strict Type Safety)
+* **Security & Authentication**: Hardware-backed biometric authentication (Face ID / Touch ID / Fingerprint)
+* **Storage & Encryption**: Encrypted client-side isolated storage sandbox
+* **Interface & Motion**: Lucide vector icons & Native Animated Driver
 
 ---
 
