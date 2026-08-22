@@ -5,7 +5,7 @@
 <h1 align="center">Pangly</h1>
 
 <p align="center">
-  <b>Your 100% On-Device Private Second Brain & Encrypted Personal Vault</b>
+  <b>100% On-Device Private Second Brain & Encrypted Personal Vault</b>
 </p>
 
 <p align="center">
@@ -24,57 +24,57 @@
 
 ## 📖 Overview
 
-**Pangly** is an encrypted, privacy-first personal vault with an intelligent on-device AI assistant. 
+**Pangly** is an encrypted, privacy-first personal vault paired with an intelligent on-device natural language query engine.
 
-Instead of scattering your driver's license photos in messaging apps, storing passwords in unencrypted notes, or uploading sensitive personal documents to third-party clouds, **Pangly keeps everything strictly on your phone**.
+Instead of scattering driver's license photos across messaging apps, saving passwords in unencrypted notes, or uploading sensitive personal documents to third-party cloud servers, **Pangly keeps all data strictly isolated on your physical device**.
 
-Ask **Pangly** anything in natural language—from *"When is my next vehicle oil change?"* to *"Show my passport photo"*—and receive instant, verified answers in seconds.
+Ask **Pangly** questions in plain language—such as *"When is my next vehicle oil change?"* or *"Show my passport photo"*—and receive instant, verified answers and high-resolution document images in seconds.
 
 <p align="center">
-  <img src="assets/pangolin/pangly_loading.gif" width="220" alt="Pangly Animated Mascot" />
+  <img src="assets/pangolin/pangly_loading.gif" width="220" alt="Pangly Loading Mascot" />
 </p>
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-### 🦔 1. "Ask Pangly" On-Device AI Assistant
-* **Natural Language Queries**: Talk to Pangly naturally to look up saved records, expiry dates, account logins, and vehicle details.
-* **Instant Photo & Document Retrieval**: Ask for an ID and immediately see the saved photo preview alongside the extracted data.
-* **Sensitive Data Shielding**: Critical fields (passwords, PINs, SSNs) remain masked until unlocked with phone biometrics (Face ID / Fingerprint).
+### 1. "Ask Pangly" On-Device Query Engine
+* **Natural Language Processing**: Query saved records, renewal dates, account credentials, and vehicle logs conversationally.
+* **Instant Photo & Document Lookup**: Retrieve high-resolution photos of ID cards and documents alongside structured text fields.
+* **Sensitive Data Shielding**: Sensitive fields (passwords, PINs, license numbers) remain concealed behind phone-native biometric authentication (Face ID / Touch ID / Fingerprint).
 
-### 🗄️ 2. Smart Modular Vault
-* 🪪 **Documents & IDs**: Store driver's licenses, passports, health cards, and membership badges with automatic expiry countdowns.
-* 🔑 **Passwords & Logins**: An encrypted offline password manager with instant search, category filtering, and one-tap clipboard copy.
-* 🚗 **Vehicle Logbook**: Track mileage, maintenance records, and calculate upcoming service intervals.
-* 📝 **Private Notes**: Encrypted scratchpad for sensitive ideas, emergency codes, and records.
-* ⏰ **Automated Reminders**: Built-in notification scheduler for document renewals and vehicle maintenance.
+### 2. Modular Personal Vault
+* **Documents & IDs**: Store driver's licenses, passports, health insurance cards, and memberships with automated expiry countdowns.
+* **Credentials & Passwords**: Offline password manager with category filtering, secure random password generator, and one-tap clipboard copy.
+* **Vehicle Logbook**: Track mileage, maintenance history, and calculate upcoming service intervals.
+* **Private Notes**: Encrypted scratchpad for sensitive notes and emergency information.
+* **Automated Reminders**: Built-in scheduler for document renewals and vehicle maintenance deadlines.
 
-### 🛡️ 3. Absolute Privacy & Local Security
-* **Zero Cloud Dependence**: No external servers, no tracking, and no analytics.
-* **Hardware-Backed Biometrics**: Native integration with Face ID and Fingerprint sensors.
-* **Private Image Sandbox**: Document photos are kept in app-isolated storage and never exposed to the public phone gallery.
+### 3. Local Security Architecture
+* **Zero Cloud Dependence**: No external servers, no tracking endpoints, and no cloud backups.
+* **Hardware-Backed Biometrics**: Direct integration with system-level biometric authentication APIs.
+* **Isolated File Sandbox**: Document photos are stored in app-isolated directories, completely hidden from the public device photo gallery.
 * **Master Recovery Phrase**: Offline recovery key format for independent vault restoration.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-* **Framework**: [React Native](https://reactnative.dev/) (v0.81.5) & [Expo](https://expo.dev/) (SDK 54)
-* **Language**: [TypeScript](https://www.typescriptlang.org/) (Strict Mode)
-* **State & Storage**: React Context API with encrypted `@react-native-async-storage/async-storage`
-* **Security & Auth**: `expo-local-authentication` (Hardware Biometrics)
-* **Camera & Files**: `expo-image-picker`, `expo-file-system`
-* **Icons & Animation**: [Lucide Icons](https://lucide.dev/), React Native Native Animated Driver
+* **Core Framework**: React Native (0.81.5) with Expo (SDK 54)
+* **Language**: TypeScript (Strict Mode)
+* **State & Persistence**: React Context API with encrypted local storage
+* **Authentication**: expo-local-authentication (Hardware Biometrics)
+* **Storage & Media**: expo-image-picker, expo-file-system
+* **Vector Icons & UI**: Lucide Icons, React Native Native Animated Driver
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
-* [Node.js](https://nodejs.org/) (v18 or higher)
-* [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
-* [Expo Go](https://expo.dev/go) app on your iOS / Android device (or Android Studio emulator)
+* Node.js (v18 or higher)
+* npm or yarn
+* Expo Go app on an iOS / Android device (or Android Studio emulator)
 
 ### Installation
 
@@ -94,38 +94,38 @@ Ask **Pangly** anything in natural language—from *"When is my next vehicle oil
    npx expo start -c
    ```
 
-4. **Run on your device**:
+4. **Run on a device / emulator**:
    * **Android Emulator / Device**: Press `a` in the terminal.
    * **iOS Simulator**: Press `i` in the terminal.
-   * **Physical Phone**: Scan the QR code using the **Expo Go** app.
+   * **Physical Phone**: Scan the terminal QR code using the Expo Go application.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Pangly/
-├── assets/                  # Icons, splash screens & animated mascot assets
+├── assets/                  # Icons, splash screens, and mascot assets
 │   ├── icon.png             # Master 1024x1024 transparent app icon
-│   └── pangolin/            # Animated GIF frames & character poses
+│   └── pangolin/            # Animation frames and character assets
 ├── src/
-│   ├── components/          # Reusable UI components & modals
+│   ├── components/          # Reusable UI components and modals
 │   │   ├── PanglyLoadingScreen.tsx
 │   │   ├── BiometricAuthModal.tsx
-│   │   └── mascot/          # Mascot animation & NPC rigs
-│   ├── context/             # Global VaultContext & storage persistence
-│   ├── engine/              # Local natural language parsing engine
+│   │   └── mascot/          # Mascot animation and character rigs
+│   ├── context/             # Global VaultContext and local storage handlers
+│   ├── engine/              # On-device natural language query engine
 │   ├── screens/             # Core application screens
-│   │   ├── AskPangly/       # Conversational AI Assistant
-│   │   ├── Documents/       # Document & ID vault
+│   │   ├── AskPangly/       # AI Assistant interface
+│   │   ├── Documents/       # Document and ID vault
 │   │   ├── Credentials/     # Password manager
-│   │   ├── Vehicles/        # Vehicle & maintenance logbook
+│   │   ├── Vehicles/        # Vehicle and maintenance logs
 │   │   ├── Notes/           # Encrypted notes
-│   │   ├── Reminders/       # Renewal & service alerts
+│   │   ├── Reminders/       # Expiry and service alerts
 │   │   ├── Onboarding/      # 4-Phase interactive onboarding
-│   │   └── Settings/        # Security, biometric & export preferences
-│   ├── services/            # Storage sandbox & device auth services
-│   └── theme/               # Dark emerald luxury design tokens
+│   │   └── Settings/        # Biometric and export preferences
+│   ├── services/            # Sandbox storage and device auth services
+│   └── theme/               # Dark emerald luxury design system
 ├── app.json                 # Expo application manifest
 ├── package.json
 └── tsconfig.json
@@ -133,20 +133,14 @@ Pangly/
 
 ---
 
-## 🔒 Privacy Manifesto
+## Privacy Policy & Philosophy
 
-Pangly was built on the core belief that your most personal information should belong exclusively to you.
-
-1. **No Accounts Required**: No email signup, phone verification, or passwords sent over the internet.
-2. **No Analytics**: Zero telemetry, tracking SDKs, or background analytics.
-3. **Your Data Stays on Your Device**: All encryption, parsing, and storage happens 100% locally.
+1. **No Account Requirement**: No email addresses, phone numbers, or account registrations.
+2. **Zero Telemetry**: No tracking SDKs, third-party analytics, or crash-reporting servers.
+3. **Local Encryption**: All parsing, rendering, and persistence occur strictly on the local client device.
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-<p align="center">
-  <sub>Built with 💚 for total digital privacy.</sub>
-</p>
