@@ -14,7 +14,7 @@ export type MascotMood =
   | 'sleeping'
   | 'shield_guard';
 
-export interface MascotAnimationParams {
+export interface MascotAnimationParams { //arayko
   breathingRate: number;      // Seconds per breathing cycle
   breathingAmplitude: number; // Vertical translation px
   eyeBlinkInterval: number;   // Milliseconds between blinks
