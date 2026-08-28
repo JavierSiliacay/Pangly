@@ -30,7 +30,7 @@ export async function requestNotificationPermission() {
     await Notifications.setNotificationChannelAsync('pangly_alerts', {
       name: 'Pangly Alerts & Reminders',
       importance: Notifications.AndroidImportance.HIGH,
-      sound: 'notification-sound.wav',
+      sound: 'notification_sound.wav',
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#10B981',
     });

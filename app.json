@@ -34,7 +34,7 @@
           "icon": "./assets/android-icon-foreground.png",
           "color": "#10B981",
           "sounds": [
-            "./assets/sounds/notification-sound.wav"
+            "./assets/sounds/notification_sound.wav"
           ]
         }
       ]

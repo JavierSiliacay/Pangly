@@ -32,7 +32,7 @@ export async function scheduleReminderNotification(params: {
       content: {
         title: 'Pangly Reminder',
         body: title,
-        sound: 'notification-sound.wav',
+        sound: 'notification_sound.wav',
         data: { reminderId: id },
       },
       trigger: {
