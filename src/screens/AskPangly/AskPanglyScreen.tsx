@@ -14,6 +14,7 @@ import {
 import { useVault } from '../../context/VaultContext';
 import { darkTheme, slateTheme, lightTheme } from '../../theme/colors';
 import { MascotRig } from '../../components/mascot/MascotRig';
+import { VoiceInputModal } from '../../components/voice/VoiceInputModal';
 import {
   Send,
   Sparkles,
@@ -37,6 +38,7 @@ export const AskPanglyScreen: React.FC = () => {
     confirmAiAction,
     requestBiometricAuth,
     setActiveTab,
+    voiceModalOpen,
     setVoiceModalOpen,
     setUniversalAddOpen,
     profile,
@@ -371,6 +373,13 @@ export const AskPanglyScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Voice Dictation Modal */}
+      <VoiceInputModal
+        visible={voiceModalOpen}
+        onClose={() => setVoiceModalOpen(false)}
+        onSendTranscription={(text) => handleSend(text)}
+      />
     </KeyboardAvoidingView>
   );
 };

@@ -77,32 +77,49 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     setActiveTab('ask_ai');
   };
 
-  const upcomingReminders = reminders.filter((r) => !r.isCompleted).slice(0, 3);
-  const expiringDocs = documents.filter((d) => d.expiryDate).slice(0, 2);
+  const upcomingReminders = reminders.filter((r) => !r.isCompleted);
+  const nextReminder = upcomingReminders[0];
+  const expiringDocs = documents.filter((d) => d.expiryDate);
+  const nextExpiringDoc = expiringDocs[0];
+
+  // Dynamic Briefing generation
+  const currentHour = new Date().getHours();
+  const timeGreeting = currentHour < 12 ? 'Good morning' : currentHour < 18 ? 'Good afternoon' : 'Good evening';
+  const firstName = profile.fullName ? profile.fullName.split(' ')[0] : '';
+  const greetingText = firstName ? `${timeGreeting}, ${firstName}! ☀️` : `${timeGreeting}! ☀️`;
+
+  let briefingSummary = 'Your personal vault is secure and organized.';
+  if (nextReminder) {
+    briefingSummary = `1 upcoming task: "${nextReminder.title}" on ${nextReminder.dueDate}.`;
+  } else if (nextExpiringDoc) {
+    briefingSummary = `1 record to watch: "${nextExpiringDoc.title}" expires on ${nextExpiringDoc.expiryDate}.`;
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Header onSearchPress={() => setActiveTab('search')} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Living Mascot NPC Greeting Card */}
+        {/* Living Mascot NPC Morning Briefing Card */}
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={() => setActiveTab('ask_ai')}
           style={[styles.mascotHeroCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
         >
-          <MascotRig mood="welcome" size={82} />
+          <MascotRig mood="welcome" size={86} />
           <View style={styles.mascotHeroContent}>
             <View style={[styles.mascotPill, { backgroundColor: theme.primaryGlow }]}>
               <Sparkles size={11} color={theme.primary} />
-              <Text style={[styles.mascotPillText, { color: theme.primary }]}>Pangly • Private Companion</Text>
+              <Text style={[styles.mascotPillText, { color: theme.primary }]}>Daily Life Briefing</Text>
             </View>
             <Text style={[styles.mascotHeroTitle, { color: theme.textPrimary }]}>
-              {profile.fullName ? `Hello ${profile.fullName}! ` : 'Welcome! '}
-              "Your information is safe on this phone. Tap me to ask anything."
+              {greetingText}
+            </Text>
+            <Text style={[styles.mascotHeroBriefing, { color: theme.textSecondary }]}>
+              {briefingSummary}
             </Text>
             <Text style={[styles.mascotHeroSub, { color: theme.textMuted }]}>
-              🔒 100% On-Device • Private & Protected
+              🔒 100% Private on this phone • Tap to ask Pangly
             </Text>
           </View>
         </TouchableOpacity>
@@ -318,9 +335,14 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   mascotHeroTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    lineHeight: 18,
+    fontSize: 14,
+    fontWeight: '800',
+    lineHeight: 19,
+  },
+  mascotHeroBriefing: {
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: '500',
   },
   mascotHeroSub: {
     fontSize: 10,

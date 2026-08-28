@@ -25,8 +25,13 @@ import {
   INITIAL_SETTINGS,
   INITIAL_AI_MESSAGES,
 } from './initialData';
-import { processLocalAiQuery } from '../engine/localAiEngine';
+import { initLlamaEngine, queryVault } from '../engine/llamaEngine';
+import { areModelsDownloaded } from '../services/modelDownloadService';
 import { authenticateWithDevice } from '../services/deviceAuthService';
+import {
+  scheduleReminderNotification,
+  cancelReminderNotification,
+} from '../services/reminderNotificationService';
 
 interface BiometricAuthRequest {
   title: string;
@@ -107,6 +112,7 @@ interface VaultContextType {
   deleteReminder: (id: string) => void;
 
   // Assistant Interaction
+  isModelReady: boolean;
   sendAiMessage: (query: string) => Promise<void>;
   confirmAiAction: (actionCard: AiActionCard) => void;
   cancelAiAction: (actionId: string) => void;
@@ -138,6 +144,7 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [reminders, setReminders] = useState<ReminderItem[]>(INITIAL_REMINDERS);
   const [settings, setSettings] = useState<VaultSettings>(INITIAL_SETTINGS);
   const [aiMessages, setAiMessages] = useState<AiMessage[]>(INITIAL_AI_MESSAGES);
+  const [isModelReady, setIsModelReady] = useState(false);
 
   // Modals & Navigation (Defaults directly to Ask Ownly)
   const [activeTab, setActiveTab] = useState<string>('ask_ai');
@@ -179,6 +186,14 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         const savedReminders = (await AsyncStorage.getItem('@pangly_reminders')) || (await AsyncStorage.getItem('@ownly_reminders'));
         if (savedReminders) setReminders(JSON.parse(savedReminders));
+
+        // Initialize the AI engine in the background after vault data loads
+        const downloaded = await areModelsDownloaded();
+        if (downloaded) {
+          initLlamaEngine().then((result) => {
+            if (result.success) setIsModelReady(true);
+          });
+        }
       } catch (e) {
         console.log('AsyncStorage load error', e);
       }
@@ -467,17 +482,39 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       AsyncStorage.setItem('@pangly_reminders', JSON.stringify(updated)).catch(() => {});
       return updated;
     });
+
+    scheduleReminderNotification({
+      id: newRem.id,
+      title: newRem.title,
+      dueDate: newRem.dueDate,
+    });
   };
 
   const toggleReminder = (id: string) => {
     setReminders((prev) => {
-      const updated = prev.map((r) => (r.id === id ? { ...r, isCompleted: !r.isCompleted } : r));
+      const updated = prev.map((r) => {
+        if (r.id === id) {
+          const nextCompleted = !r.isCompleted;
+          if (nextCompleted) {
+            cancelReminderNotification(id);
+          } else {
+            scheduleReminderNotification({
+              id: r.id,
+              title: r.title,
+              dueDate: r.dueDate,
+            });
+          }
+          return { ...r, isCompleted: nextCompleted };
+        }
+        return r;
+      });
       AsyncStorage.setItem('@pangly_reminders', JSON.stringify(updated)).catch(() => {});
       return updated;
     });
   };
 
   const deleteReminder = (id: string) => {
+    cancelReminderNotification(id);
     setReminders((prev) => {
       const updated = prev.filter((r) => r.id !== id);
       AsyncStorage.setItem('@pangly_reminders', JSON.stringify(updated)).catch(() => {});
@@ -496,7 +533,18 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setAiMessages((prev) => [...prev, userMsg]);
 
-    const result = processLocalAiQuery(query, {
+    // Add placeholder assistant message — we stream into it token by token
+    const aiMsgId = `ai-${Date.now()}`;
+    const placeholderMsg: AiMessage = {
+      id: aiMsgId,
+      sender: 'assistant',
+      text: '',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      state: 'thinking',
+    };
+    setAiMessages((prev) => [...prev, placeholderMsg]);
+
+    const vaultSnapshot = {
       documents,
       credentials,
       profile,
@@ -505,21 +553,82 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       notes,
       reminders,
       settings,
-    });
-
-    const assistantMsg: AiMessage = {
-      id: `ai-${Date.now()}`,
-      sender: 'assistant',
-      text: result.text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      state: result.state,
-      actionCard: result.actionCard,
-      sensitiveData: result.sensitiveData,
-      linkedItem: result.linkedItem,
-      suggestedAdd: result.suggestedAdd,
     };
 
-    setAiMessages((prev) => [...prev, assistantMsg]);
+    // Stream each token into the live message
+    await queryVault(
+      query,
+      vaultSnapshot,
+      (token) => {
+        setAiMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === aiMsgId
+              ? { ...msg, text: msg.text + token, state: 'searching' }
+              : msg
+          )
+        );
+      },
+      (result) => {
+        // Execute any parsed xLAM autonomous actions
+        if (result.toolCalls && result.toolCalls.length > 0) {
+          for (const call of result.toolCalls) {
+            const args = call.arguments;
+            if (call.name === 'create_reminder' && args.title && args.dueDate) {
+              addReminder({
+                title: args.title,
+                dueDate: args.dueDate,
+                category: 'Personal',
+                priority: args.priority || 'medium',
+                isCompleted: false,
+              });
+            } else if (call.name === 'save_document' && args.title && args.category) {
+              addDocument({
+                title: args.title,
+                category: args.category,
+                documentNumber: args.documentNumber,
+                issueDate: args.issueDate,
+                expiryDate: args.expiryDate,
+                provider: args.provider,
+              });
+            } else if (call.name === 'save_note' && args.title && args.content) {
+              addNote({
+                title: args.title,
+                content: args.content,
+                category: 'Personal',
+              });
+            } else if (call.name === 'save_vehicle_maintenance' && args.serviceType) {
+              const defaultVehicle = vehicles[0];
+              const defaultVehicleId = defaultVehicle?.id || 'v1';
+              const defaultVehicleName = defaultVehicle ? `${defaultVehicle.year} ${defaultVehicle.make} ${defaultVehicle.model}` : 'My Vehicle';
+              addMaintenance({
+                vehicleId: defaultVehicleId,
+                vehicleName: defaultVehicleName,
+                type: (args.serviceType as any) || 'Other',
+                cost: Number(args.cost) || 0,
+                mileage: Number(args.mileage) || defaultVehicle?.mileage || 0,
+                date: args.performedAt || new Date().toISOString().split('T')[0],
+                notes: args.notes || '',
+              });
+            } else if (call.name === 'update_personal_profile') {
+              updateProfile({
+                ...(args.phone ? { phone: args.phone } : {}),
+                ...(args.email ? { email: args.email } : {}),
+                ...(args.bloodType ? { bloodType: args.bloodType } : {}),
+              });
+            }
+          }
+        }
+
+        // Final pass — mark complete and display friendly text
+        setAiMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === aiMsgId
+              ? { ...msg, text: result.text.trim(), state: 'found' }
+              : msg
+          )
+        );
+      }
+    );
   };
 
   const confirmAiAction = (actionCard: AiActionCard) => {
@@ -684,6 +793,7 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         reminders,
         settings,
         aiMessages,
+        isModelReady,
 
         activeTab,
         setActiveTab,

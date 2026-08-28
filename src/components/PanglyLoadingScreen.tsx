@@ -1,6 +1,6 @@
 // src/components/PanglyLoadingScreen.tsx
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -10,21 +10,31 @@ import {
   Dimensions,
   StatusBar,
   Easing,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
-import { ShieldCheck } from 'lucide-react-native';
+import { ShieldCheck, WifiOff } from 'lucide-react-native';
+import {
+  areModelsDownloaded,
+  downloadModels,
+  cancelDownload,
+  OverallProgress,
+} from '../services/modelDownloadService';
 
 const { width } = Dimensions.get('window');
 
-// Master Animated Pangolin & Mini Vault GIF
 const PANGLY_LOADING_GIF = require('../../assets/pangolin/pangly_loading.gif');
 
 interface PanglyLoadingScreenProps {
   onFinish?: () => void;
 }
 
-export const PanglyLoadingScreen: React.FC<PanglyLoadingScreenProps> = ({
-  onFinish,
-}) => {
+type Phase = 'checking' | 'downloading' | 'loading' | 'done';
+
+export const PanglyLoadingScreen: React.FC<PanglyLoadingScreenProps> = ({ onFinish }) => {
+  const [phase, setPhase] = useState<Phase>('checking');
+  const [dlProgress, setDlProgress] = useState<OverallProgress | null>(null);
+  const [dlError, setDlError] = useState<string | null>(null);
   const [statusIndex, setStatusIndex] = useState(0);
 
   const statusMessages = [
@@ -33,48 +43,33 @@ export const PanglyLoadingScreen: React.FC<PanglyLoadingScreenProps> = ({
     'Welcome back.',
   ];
 
-  // Animation Values
+  // ─── Animation values ────────────────────────────────────────────────────
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.92)).current;
   const glowAnim = useRef(new Animated.Value(0.35)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
   const textFadeAnim = useRef(new Animated.Value(1)).current;
+  const dlBarAnim = useRef(new Animated.Value(0)).current;
 
+  // ─── Entrance animation ──────────────────────────────────────────────────
   useEffect(() => {
-    // 1. Immediate, Crisp Entrance Fade & Pop (350ms)
     Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 350,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 7,
-        tension: 35,
-        useNativeDriver: true,
-      }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 350, useNativeDriver: true }),
+      Animated.spring(scaleAnim, { toValue: 1, friction: 7, tension: 35, useNativeDriver: true }),
     ]).start();
 
-    // 2. Continuous Soft Emerald Aura Breathing Loop (Loops indefinitely)
     Animated.loop(
       Animated.sequence([
-        Animated.timing(glowAnim, {
-          toValue: 1,
-          duration: 1000,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(glowAnim, {
-          toValue: 0.35,
-          duration: 1000,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
+        Animated.timing(glowAnim, { toValue: 1, duration: 1000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(glowAnim, { toValue: 0.35, duration: 1000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
       ])
     ).start();
+  }, []);
 
-    // 3. Loading Bar: Exactly 10.0 Seconds Smooth Fill
+  // ─── Normal loading animation (models already downloaded) ────────────────
+  const startNormalLoading = useCallback(() => {
+    setPhase('loading');
+
     Animated.timing(progressAnim, {
       toValue: 1,
       duration: 10000,
@@ -82,7 +77,6 @@ export const PanglyLoadingScreen: React.FC<PanglyLoadingScreenProps> = ({
       useNativeDriver: false,
     }).start();
 
-    // 4. Status Text Transitions across the 10 seconds
     const t1 = setTimeout(() => {
       Animated.sequence([
         Animated.timing(textFadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
@@ -99,13 +93,13 @@ export const PanglyLoadingScreen: React.FC<PanglyLoadingScreenProps> = ({
       setStatusIndex(2);
     }, 6800);
 
-    // 5. Complete immediately after the 10-second loading bar finishes
     const exitTimer = setTimeout(() => {
       Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 350,
         useNativeDriver: true,
       }).start(() => {
+        setPhase('done');
         if (onFinish) onFinish();
       });
     }, 10200);
@@ -115,42 +109,151 @@ export const PanglyLoadingScreen: React.FC<PanglyLoadingScreenProps> = ({
       clearTimeout(t2);
       clearTimeout(exitTimer);
     };
+  }, [onFinish]);
+
+  const hasStartedDownload = useRef(false);
+
+  // ─── Check on mount whether models need downloading ──────────────────────
+  useEffect(() => {
+    if (hasStartedDownload.current) return;
+    hasStartedDownload.current = true;
+
+    areModelsDownloaded().then((downloaded) => {
+      if (downloaded) {
+        startNormalLoading();
+      } else {
+        setPhase('downloading');
+        startDownload();
+      }
+    });
   }, []);
 
-  const progressWidth = progressAnim.interpolate({
+  // ─── Download flow ───────────────────────────────────────────────────────
+  const startDownload = useCallback(async () => {
+    setDlError(null);
+
+    const success = await downloadModels((progress) => {
+      setDlProgress(progress);
+
+      const activeModelProgress = progress.models.agent.progress;
+      // Animate the download progress bar smoothly
+      Animated.timing(dlBarAnim, {
+        toValue: activeModelProgress,
+        duration: 400,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false,
+      }).start();
+    });
+
+    if (success) {
+      startNormalLoading();
+    } else {
+      setDlError('Setup couldn\'t complete. Check your connection and try again.');
+    }
+  }, [startNormalLoading]);
+
+  // ─── Derived download bar width ──────────────────────────────────────────
+  const progressBarWidth = progressAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0%', '100%'],
   });
 
+  const dlBarWidth = dlBarAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
+  });
+
+  // ─── Download Phase UI ───────────────────────────────────────────────────
+  if (phase === 'downloading') {
+    const activeModel = dlProgress?.models.agent ?? null;
+
+    return (
+      <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+        <StatusBar barStyle="light-content" backgroundColor="#060D0A" />
+
+        <Animated.View style={[styles.auraGlow, { opacity: glowAnim }]} />
+
+        <Animated.View style={[styles.centerContent, { transform: [{ scale: scaleAnim }] }]}>
+          <Image source={PANGLY_LOADING_GIF} style={styles.mascotImage} resizeMode="contain" />
+
+          <Text style={styles.brandTitle}>PANGLY</Text>
+
+          {/* One-time setup header */}
+          <View style={styles.setupHeaderBox}>
+            <ShieldCheck size={14} color="#10B981" />
+            <Text style={styles.setupHeaderText}>One-time Private Setup</Text>
+          </View>
+
+          <Text style={styles.setupSubtext}>
+            Everything stays on your device. This only happens once.
+          </Text>
+
+          {/* Active model card */}
+          {activeModel ? (
+            <View style={styles.modelCard}>
+              <Text style={styles.modelCardTitle}>{activeModel.displayName}</Text>
+              <Text style={styles.modelCardDesc}>{activeModel.displayDesc}</Text>
+
+              {/* Progress bar */}
+              <View style={styles.downloadBarBg}>
+                <Animated.View style={[styles.downloadBarFill, { width: dlBarWidth }]} />
+              </View>
+
+              {/* Speed / progress line */}
+              {activeModel.speedLabel ? (
+                <Text style={styles.speedLabel}>{activeModel.speedLabel}</Text>
+              ) : null}
+
+              {/* ETA */}
+              {dlProgress?.etaLabel ? (
+                <Text style={styles.etaLabel}>{dlProgress.etaLabel}</Text>
+              ) : null}
+            </View>
+          ) : (
+            <View style={styles.modelCard}>
+              <Text style={styles.modelCardTitle}>Setting up Pangly AI</Text>
+              <Text style={styles.modelCardDesc}>Getting things ready...</Text>
+              <View style={styles.downloadBarBg}>
+                <Animated.View style={[styles.downloadBarFill, { width: '5%' }]} />
+              </View>
+            </View>
+          )}
+
+          {/* Error state */}
+          {dlError ? (
+            <View style={styles.errorBox}>
+              <WifiOff size={16} color="#F87171" />
+              <Text style={styles.errorText}>{dlError}</Text>
+              <TouchableOpacity
+                style={styles.retryBtn}
+                onPress={() => {
+                  setDlError(null);
+                  startDownload();
+                }}
+              >
+                <Text style={styles.retryBtnText}>Retry Setup</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+        </Animated.View>
+      </Animated.View>
+    );
+  }
+
+  // ─── Normal Loading Phase UI (models ready) ──────────────────────────────
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <StatusBar barStyle="light-content" backgroundColor="#060D0A" />
 
-      {/* Pulsing Emerald Aura Glow */}
-      <Animated.View
-        style={[
-          styles.auraGlow,
-          {
-            opacity: glowAnim,
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}
-      />
+      <Animated.View style={[styles.auraGlow, { opacity: glowAnim, transform: [{ scale: scaleAnim }] }]} />
 
       <Animated.View style={[styles.centerContent, { transform: [{ scale: scaleAnim }] }]}>
-        {/* Animated Pangolin Holding Mini Vault (Continuous GIF loop) */}
         <View style={styles.mascotWrapper}>
-          <Image
-            source={PANGLY_LOADING_GIF}
-            style={styles.mascotImage}
-            resizeMode="contain"
-          />
+          <Image source={PANGLY_LOADING_GIF} style={styles.mascotImage} resizeMode="contain" />
         </View>
 
-        {/* Brand Name */}
         <Text style={styles.brandTitle}>PANGLY</Text>
 
-        {/* Slogan */}
         <View style={styles.sloganRow}>
           <Text style={styles.sloganHighlight}>Store it.</Text>
           <Text style={styles.sloganDot}>•</Text>
@@ -159,18 +262,15 @@ export const PanglyLoadingScreen: React.FC<PanglyLoadingScreenProps> = ({
           <Text style={styles.sloganHighlight}>Own it.</Text>
         </View>
 
-        {/* Privacy Pill Badge */}
         <View style={styles.privacyBadge}>
           <ShieldCheck size={13} color="#10B981" />
           <Text style={styles.privacyBadgeText}>100% On-Device • Encrypted</Text>
         </View>
 
-        {/* 10-Second Loading Bar Track */}
         <View style={styles.progressBarBg}>
-          <Animated.View style={[styles.progressBarFill, { width: progressWidth }]} />
+          <Animated.View style={[styles.progressBarFill, { width: progressBarWidth }]} />
         </View>
 
-        {/* Live Status Row */}
         <Animated.View style={[styles.statusRow, { opacity: textFadeAnim }]}>
           <View style={styles.liveIndicatorDot} />
           <Text style={styles.statusText}>{statusMessages[statusIndex]}</Text>
@@ -199,6 +299,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
+    width: '100%',
   },
   mascotWrapper: {
     width: 185,
@@ -232,18 +333,18 @@ const styles = StyleSheet.create({
   },
   sloganDot: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.3)',
+    color: 'rgba(255,255,255,0.3)',
   },
   privacyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    backgroundColor: 'rgba(16,185,129,0.12)',
     paddingHorizontal: 13,
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.25)',
+    borderColor: 'rgba(16,185,129,0.25)',
     marginBottom: 22,
   },
   privacyBadgeText: {
@@ -255,7 +356,7 @@ const styles = StyleSheet.create({
   progressBarBg: {
     width: 220,
     height: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 3,
     overflow: 'hidden',
     marginBottom: 12,
@@ -278,9 +379,143 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B981',
   },
   statusText: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(255,255,255,0.7)',
     fontSize: 12.5,
     fontWeight: '500',
     letterSpacing: 0.2,
+  },
+
+  // ── Download-specific styles ──
+  setupHeaderBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(16,185,129,0.12)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.25)',
+    marginBottom: 8,
+  },
+  setupHeaderText: {
+    color: '#10B981',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  setupSubtext: {
+    color: 'rgba(255,255,255,0.45)',
+    fontSize: 11.5,
+    textAlign: 'center',
+    marginBottom: 18,
+    lineHeight: 17,
+    paddingHorizontal: 16,
+  },
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 0,
+    marginBottom: 4,
+  },
+  stepDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  stepDotActive: {
+    backgroundColor: '#10B981',
+    borderColor: '#10B981',
+  },
+  stepLine: {
+    width: 60,
+    height: 1.5,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  stepLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: 140,
+    marginBottom: 16,
+  },
+  stepLabel: {
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 9,
+    fontWeight: '600',
+  },
+  stepLabelActive: {
+    color: '#10B981',
+  },
+  modelCard: {
+    width: width - 64,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.18)',
+    padding: 16,
+    marginBottom: 12,
+  },
+  modelCardTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  modelCardDesc: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 11.5,
+    marginBottom: 12,
+    lineHeight: 17,
+  },
+  downloadBarBg: {
+    width: '100%',
+    height: 5,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  downloadBarFill: {
+    height: '100%',
+    backgroundColor: '#10B981',
+    borderRadius: 3,
+  },
+  speedLabel: {
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 10.5,
+    fontWeight: '500',
+    letterSpacing: 0.2,
+  },
+  etaLabel: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 10,
+    marginTop: 2,
+  },
+  errorBox: {
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+    paddingHorizontal: 16,
+  },
+  errorText: {
+    color: '#F87171',
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  retryBtn: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginTop: 4,
+  },
+  retryBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

@@ -50,6 +50,20 @@ export const INITIAL_SETTINGS: VaultSettings = {
     vehicles: true,
     notes: true,
     reminders: true,
+    allowPasswordsViaChat: true,        // AI shows masked passwords on request
+    requireConfirmBeforeCreate: true,   // Always ask before AI saves anything
+    autoRevealSensitive: false,         // Biometric always required — cannot skip
+  },
+  aiPreferences: {
+    personality: 'friendly',           // Warm, natural tone by default
+    responseLanguage: 'auto',          // Match user's language automatically
+    streamingResponses: true,          // Token-by-token output (feels alive)
+    showLinkedItemButton: true,        // Show "View in Vault" shortcut
+  },
+  documentScan: {
+    showClarityConfirmation: true,     // Gate 1 — always confirm photo clarity
+    showOcrReview: true,               // Gate 2 — always review extracted text
+    blurSensitivity: 'medium',
   },
   recoveryKey: 'OWNLY-98F2-A814-72D9-5BE1-9130-C7FA-3304',
   authMethod: 'device_biometrics',

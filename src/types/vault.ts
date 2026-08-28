@@ -27,9 +27,12 @@ export interface DocumentItem {
   isSensitive?: boolean;
   reminderCreated?: boolean;
   linkedVehicleId?: string;
+  ocrText?: string;           // Extracted by Pangly Vision at save time
+  ocrExtractedAt?: string;    // ISO timestamp of when extraction ran
   createdAt: string;
   updatedAt: string;
 }
+
 
 export type CredentialCategory = 
   | 'Personal'
@@ -195,6 +198,20 @@ export interface VaultSettings {
     vehicles: boolean;
     notes: boolean;
     reminders: boolean;
+    allowPasswordsViaChat: boolean;       // AI can surface masked passwords in chat
+    requireConfirmBeforeCreate: boolean;  // Always confirm before AI saves anything
+    autoRevealSensitive: boolean;         // Skip biometric for reveal (default: false)
+  };
+  aiPreferences: {
+    personality: 'friendly' | 'professional' | 'minimal';
+    responseLanguage: 'auto' | 'english' | 'filipino';
+    streamingResponses: boolean;    // Token-by-token output
+    showLinkedItemButton: boolean;  // Show "View in Vault" button after answers
+  };
+  documentScan: {
+    showClarityConfirmation: boolean;  // Gate 1 — user confirms photo clarity
+    showOcrReview: boolean;            // Gate 2 — user reviews extracted text
+    blurSensitivity: 'low' | 'medium' | 'high';
   };
   recoveryKey: string;
   pinCode?: string;
@@ -202,3 +219,4 @@ export interface VaultSettings {
   hasCompletedOnboarding: boolean;
   isVaultLocked: boolean;
 }
+

@@ -18,6 +18,7 @@ import { ScannerModal } from './src/components/ScannerModal';
 import { UniversalAddModal } from './src/components/UniversalAddModal';
 
 import { PanglyLoadingScreen } from './src/components/PanglyLoadingScreen';
+import { MascotTourModal } from './src/components/mascot/MascotTourModal';
 
 // Screens
 import { InteractiveOnboarding } from './src/screens/Onboarding/InteractiveOnboarding';
@@ -52,6 +53,7 @@ const MainAppContent: React.FC = () => {
   const [addMaintModal, setAddMaintModal] = useState(false);
   const [addNoteModal, setAddNoteModal] = useState(false);
   const [addReminderModal, setAddReminderModal] = useState(false);
+  const [showTourModal, setShowTourModal] = useState(false);
 
   const handleUniversalActionSelect = (actionId: string) => {
     switch (actionId) {
@@ -89,7 +91,7 @@ const MainAppContent: React.FC = () => {
     return (
       <SafeAreaView style={[styles.root, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
         <StatusBar barStyle={settings.theme === 'light' ? 'dark-content' : 'light-content'} />
-        <InteractiveOnboarding onComplete={() => {}} />
+        <InteractiveOnboarding onComplete={() => setShowTourModal(true)} />
       </SafeAreaView>
     );
   }
@@ -158,6 +160,9 @@ const MainAppContent: React.FC = () => {
       />
       <NoteEditorModal note={null} visible={addNoteModal} onClose={() => setAddNoteModal(false)} />
       <AddReminderModal visible={addReminderModal} onClose={() => setAddReminderModal(false)} />
+
+      {/* Interactive Mascot Tour Walkthrough */}
+      <MascotTourModal visible={showTourModal} onClose={() => setShowTourModal(false)} />
     </SafeAreaView>
   );
 };
