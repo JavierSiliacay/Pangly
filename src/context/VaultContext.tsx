@@ -187,12 +187,16 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const savedReminders = (await AsyncStorage.getItem('@pangly_reminders')) || (await AsyncStorage.getItem('@ownly_reminders'));
         if (savedReminders) setReminders(JSON.parse(savedReminders));
 
-        // Initialize the AI engine in the background after vault data loads
-        const downloaded = await areModelsDownloaded();
+        // Initialize the AI engine safely in the background after vault data loads
+        const downloaded = await areModelsDownloaded().catch(() => false);
         if (downloaded) {
-          initLlamaEngine().then((result) => {
-            if (result.success) setIsModelReady(true);
-          });
+          setTimeout(() => {
+            initLlamaEngine().then((result) => {
+              if (result.success) setIsModelReady(true);
+            }).catch((err) => {
+              console.warn('[VaultContext] Llama background init failed gracefully:', err);
+            });
+          }, 1500);
         }
       } catch (e) {
         console.log('AsyncStorage load error', e);

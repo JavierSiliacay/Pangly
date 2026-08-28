@@ -71,10 +71,10 @@ export async function initLlamaEngine(): Promise<{ success: boolean; error?: str
 
     llamaContext = await initLlama({
       model: paths.agent,
-      use_mlock: true,      // Lock model in RAM to prevent swapping
-      n_ctx: 8192,          // Context window — enough for vault + conversation
-      n_threads: 4,         // Balanced: performance vs battery on mobile
-      n_batch: 512,
+      use_mlock: false,     // Avoid OOM lock failure on Android devices
+      n_ctx: 2048,          // Balanced context window for mobile stability
+      n_threads: 2,         // Stable CPU thread count
+      n_batch: 256,
       n_gpu_layers: 0,      // CPU-only for broad device compatibility
     });
 

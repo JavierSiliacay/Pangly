@@ -72,37 +72,37 @@ export const PanglyLoadingScreen: React.FC<PanglyLoadingScreenProps> = ({ onFini
 
     Animated.timing(progressAnim, {
       toValue: 1,
-      duration: 10000,
-      easing: Easing.linear,
+      duration: 2000,
+      easing: Easing.out(Easing.quad),
       useNativeDriver: false,
     }).start();
 
     const t1 = setTimeout(() => {
       Animated.sequence([
-        Animated.timing(textFadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-        Animated.timing(textFadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
+        Animated.timing(textFadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }),
+        Animated.timing(textFadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
       ]).start();
       setStatusIndex(1);
-    }, 3200);
+    }, 800);
 
     const t2 = setTimeout(() => {
       Animated.sequence([
-        Animated.timing(textFadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-        Animated.timing(textFadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
+        Animated.timing(textFadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }),
+        Animated.timing(textFadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
       ]).start();
       setStatusIndex(2);
-    }, 6800);
+    }, 1400);
 
     const exitTimer = setTimeout(() => {
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 350,
+        duration: 300,
         useNativeDriver: true,
       }).start(() => {
         setPhase('done');
         if (onFinish) onFinish();
       });
-    }, 10200);
+    }, 2200);
 
     return () => {
       clearTimeout(t1);
