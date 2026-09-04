@@ -22,7 +22,7 @@ import {
 } from '../services/modelDownloadService';
 
 const { width } = Dimensions.get('window');
-const PANGLY_LOADING_IMG = require('../../assets/pangolin/pangly_pose_waving.png');
+const PANGLY_LOADING_GIF = require('../../assets/pangolin/pangly_loading.gif');
 
 interface PanglyLoadingScreenProps {
   onFinish?: () => void;
@@ -174,7 +174,7 @@ export const PanglyLoadingScreen: React.FC<PanglyLoadingScreenProps> = ({ onFini
         <Animated.View style={[styles.auraGlow, { opacity: glowAnim }]} />
 
         <Animated.View style={[styles.centerContent, { transform: [{ scale: scaleAnim }] }]}>
-          <Image source={PANGLY_LOADING_IMG} style={styles.mascotImage} resizeMode="contain" />
+          <Image source={PANGLY_LOADING_GIF} style={styles.mascotImage} resizeMode="contain" />
 
           <Text style={styles.brandTitle}>PANGLY</Text>
 
@@ -249,7 +249,7 @@ export const PanglyLoadingScreen: React.FC<PanglyLoadingScreenProps> = ({ onFini
 
       <Animated.View style={[styles.centerContent, { transform: [{ scale: scaleAnim }] }]}>
         <View style={styles.mascotWrapper}>
-          <Image source={PANGLY_LOADING_IMG} style={styles.mascotImage} resizeMode="contain" />
+          <Image source={PANGLY_LOADING_GIF} style={styles.mascotImage} resizeMode="contain" />
         </View>
 
         <Text style={styles.brandTitle}>PANGLY</Text>

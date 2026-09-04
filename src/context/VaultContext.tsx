@@ -147,8 +147,8 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [aiMessages, setAiMessages] = useState<AiMessage[]>(INITIAL_AI_MESSAGES);
   const [isModelReady, setIsModelReady] = useState(false);
 
-  // Modals & Navigation (Defaults directly to Ask Ownly)
-  const [activeTab, setActiveTab] = useState<string>('ask_ai');
+  // Modals & Navigation (Defaults to Home)
+  const [activeTab, setActiveTab] = useState<string>('home');
   const [scannerModalOpen, setScannerModalOpen] = useState(false);
   const [scannerMode, setScannerMode] = useState<'document' | 'receipt' | 'vin' | 'qr'>('document');
   const [universalAddOpen, setUniversalAddOpen] = useState(false);
@@ -722,7 +722,7 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
       return updated;
     });
-    setActiveTab('ask_ai');
+    setActiveTab('home');
   };
 
   const initializeAi = async (): Promise<boolean> => {
