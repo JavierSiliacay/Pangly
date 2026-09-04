@@ -65,14 +65,20 @@ export const InteractiveOnboarding: React.FC<InteractiveOnboardingProps> = ({
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    let isMounted = true;
     checkDeviceAuthCapabilities().then((caps) => {
+      if (!isMounted) return;
       setDeviceAuth(caps);
       if (caps.supportsFingerprint || caps.supportsFaceRecognition) {
         setSelectedMethod('device_biometrics');
       } else {
         setSelectedMethod('device_passcode');
       }
-    });
+    }).catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const triggerPhaseTransition = (nextPhase: 1 | 2 | 3 | 4) => {
