@@ -126,6 +126,7 @@ interface VaultContextType {
   unlockVaultWithDevice: (prompt?: string) => Promise<boolean>;
   unlockVaultWithRecoveryKey: (recoveryKey: string) => boolean;
   completeOnboarding: (authMethod?: 'device_biometrics' | 'device_passcode') => void;
+  initializeAi: () => Promise<boolean>;
   resetVaultWithRecoveryKey: (recoveryKey: string, newPin?: string) => boolean;
   exportVaultJson: () => string;
   importVaultJson: (jsonString: string) => boolean;
@@ -187,16 +188,10 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const savedReminders = (await AsyncStorage.getItem('@pangly_reminders')) || (await AsyncStorage.getItem('@ownly_reminders'));
         if (savedReminders) setReminders(JSON.parse(savedReminders));
 
-        // Initialize the AI engine safely in the background after vault data loads
+        // Mark model ready if files exist, but keep native context lazy until user chats
         const downloaded = await areModelsDownloaded().catch(() => false);
         if (downloaded) {
-          setTimeout(() => {
-            initLlamaEngine().then((result) => {
-              if (result.success) setIsModelReady(true);
-            }).catch((err) => {
-              console.warn('[VaultContext] Llama background init failed gracefully:', err);
-            });
-          }, 1500);
+          setIsModelReady(true);
         }
       } catch (e) {
         console.log('AsyncStorage load error', e);
@@ -714,14 +709,34 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const completeOnboarding = (authMethod: 'device_biometrics' | 'device_passcode' = 'device_biometrics') => {
-    setSettings((prev) => ({
-      ...prev,
-      authMethod,
-      biometricsEnabled: authMethod === 'device_biometrics',
-      hasCompletedOnboarding: true,
-      isVaultLocked: false,
-    }));
+    setSettings((prev) => {
+      const updated = {
+        ...prev,
+        authMethod,
+        biometricsEnabled: authMethod === 'device_biometrics',
+        hasCompletedOnboarding: true,
+        isVaultLocked: false,
+      };
+      AsyncStorage.setItem('@pangly_settings', JSON.stringify(updated)).catch((err) => {
+        console.warn('[VaultContext] Failed to save settings on onboarding complete:', err);
+      });
+      return updated;
+    });
     setActiveTab('ask_ai');
+  };
+
+  const initializeAi = async (): Promise<boolean> => {
+    try {
+      const res = await initLlamaEngine();
+      if (res.success) {
+        setIsModelReady(true);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.warn('[VaultContext] initializeAi error:', err);
+      return false;
+    }
   };
 
   const resetVaultWithRecoveryKey = (recoveryKey: string, newPin?: string) => {
@@ -850,6 +865,7 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         unlockVaultWithDevice,
         unlockVaultWithRecoveryKey,
         completeOnboarding,
+        initializeAi,
         resetVaultWithRecoveryKey,
         exportVaultJson,
         importVaultJson,

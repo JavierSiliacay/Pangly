@@ -20,6 +20,7 @@ import {
   cancelDownload,
   OverallProgress,
 } from '../services/modelDownloadService';
+import { initLlamaEngine } from '../engine/llamaEngine';
 
 const { width } = Dimensions.get('window');
 
@@ -146,6 +147,7 @@ export const PanglyLoadingScreen: React.FC<PanglyLoadingScreenProps> = ({ onFini
     });
 
     if (success) {
+      // Model download complete -> transition immediately to onboarding/vault
       startNormalLoading();
     } else {
       setDlError('Setup couldn\'t complete. Check your connection and try again.');
