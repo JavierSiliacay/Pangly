@@ -23,11 +23,19 @@ export const VaultUnlockScreen: React.FC = () => {
   const [authError, setAuthError] = useState('');
 
   useEffect(() => {
-    checkDeviceAuthCapabilities().then((caps) => {
-      setDeviceCaps(caps);
-    });
-    // Auto-trigger biometric / device lock prompt when opening lockscreen
-    handleDeviceUnlock();
+    let isMounted = true;
+    const timer = setTimeout(() => {
+      checkDeviceAuthCapabilities().then((caps) => {
+        if (!isMounted) return;
+        setDeviceCaps(caps);
+      }).catch(() => {});
+      handleDeviceUnlock();
+    }, 300);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, []);
 
   const handleDeviceUnlock = async () => {

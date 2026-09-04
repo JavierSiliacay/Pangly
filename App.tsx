@@ -82,31 +82,6 @@ const MainAppContent: React.FC = () => {
     }
   };
 
-  // 0. Initial App Launch Loading Screen
-  if (isBootLoading) {
-    return <PanglyLoadingScreen onFinish={() => setIsBootLoading(false)} />;
-  }
-
-  // 1. First-Time Onboarding (Interactive Mascot Setup)
-  if (!settings.hasCompletedOnboarding) {
-    return (
-      <SafeAreaView style={[styles.root, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
-        <StatusBar barStyle={settings.theme === 'light' ? 'dark-content' : 'light-content'} />
-        <InteractiveOnboarding onComplete={() => setShowTourModal(true)} />
-      </SafeAreaView>
-    );
-  }
-
-  // 2. Vault Locked Screen
-  if (settings.isVaultLocked) {
-    return (
-      <SafeAreaView style={[styles.root, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
-        <StatusBar barStyle={settings.theme === 'light' ? 'dark-content' : 'light-content'} />
-        <VaultUnlockScreen />
-      </SafeAreaView>
-    );
-  }
-
   // Determine Vault segment if navigated directly to child domain
   const isVaultTab = ['vault', 'documents', 'credentials', 'vehicles', 'notes', 'profile'].includes(activeTab);
   const initialSegment: VaultSegment =
@@ -120,27 +95,35 @@ const MainAppContent: React.FC = () => {
       ? 'profile'
       : 'documents';
 
-  // 3. Main Unlocked Vault Navigation
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
       <StatusBar barStyle={settings.theme === 'light' ? 'dark-content' : 'light-content'} />
 
-      {/* Screen Router */}
-      <View style={styles.screenContainer}>
-        {activeTab === 'home' && (
-          <HomeScreen
-            onOpenUniversalAdd={() => setUniversalAddOpen(true)}
-          />
-        )}
-        {isVaultTab && <VaultHubScreen initialSegment={initialSegment} />}
-        {activeTab === 'ask_ai' && <AskPanglyScreen />}
-        {activeTab === 'reminders' && <RemindersScreen />}
-        {activeTab === 'search' && <GlobalSearchScreen onBack={() => setActiveTab('home')} />}
-        {activeTab === 'settings' && <SettingsScreen />}
-      </View>
+      {/* Main View Hierarchy */}
+      {!settings.hasCompletedOnboarding ? (
+        <InteractiveOnboarding onComplete={() => setShowTourModal(true)} />
+      ) : settings.isVaultLocked ? (
+        <VaultUnlockScreen />
+      ) : (
+        <>
+          {/* Screen Router */}
+          <View style={styles.screenContainer}>
+            {activeTab === 'home' && (
+              <HomeScreen
+                onOpenUniversalAdd={() => setUniversalAddOpen(true)}
+              />
+            )}
+            {isVaultTab && <VaultHubScreen initialSegment={initialSegment} />}
+            {activeTab === 'ask_ai' && <AskPanglyScreen />}
+            {activeTab === 'reminders' && <RemindersScreen />}
+            {activeTab === 'search' && <GlobalSearchScreen onBack={() => setActiveTab('home')} />}
+            {activeTab === 'settings' && <SettingsScreen />}
+          </View>
 
-      {/* Bottom Navigation Bar */}
-      <BottomTabBar />
+          {/* Bottom Navigation Bar */}
+          <BottomTabBar />
+        </>
+      )}
 
       {/* Global Modals & Overlays */}
       <BiometricAuthModal />
@@ -148,22 +131,29 @@ const MainAppContent: React.FC = () => {
       <ScannerModal />
       <UniversalAddModal onSelectAction={handleUniversalActionSelect} />
 
-      {/* Fast Add Sub-Modals */}
-      <AddDocumentModal visible={addDocModal} onClose={() => setAddDocModal(false)} />
-      <AddCredentialModal visible={addCredModal} onClose={() => setAddCredModal(false)} />
-      <AddVehicleModal visible={addVehicleModal} onClose={() => setAddVehicleModal(false)} />
-      <AddMaintenanceModal
-        vehicleId={vehicles[0]?.id || 'veh-1'}
-        vehicleName={vehicles[0] ? `${vehicles[0].make} ${vehicles[0].model}` : 'My Vehicle'}
-        currentMileage={vehicles[0]?.mileage || 0}
-        visible={addMaintModal}
-        onClose={() => setAddMaintModal(false)}
-      />
-      <NoteEditorModal note={null} visible={addNoteModal} onClose={() => setAddNoteModal(false)} />
-      <AddReminderModal visible={addReminderModal} onClose={() => setAddReminderModal(false)} />
+      {/* Fast Add Sub-Modals (Lazily mounted only when visible) */}
+      {addDocModal && <AddDocumentModal visible={addDocModal} onClose={() => setAddDocModal(false)} />}
+      {addCredModal && <AddCredentialModal visible={addCredModal} onClose={() => setAddCredModal(false)} />}
+      {addVehicleModal && <AddVehicleModal visible={addVehicleModal} onClose={() => setAddVehicleModal(false)} />}
+      {addMaintModal && (
+        <AddMaintenanceModal
+          vehicleId={vehicles[0]?.id || 'veh-1'}
+          vehicleName={vehicles[0] ? `${vehicles[0].make} ${vehicles[0].model}` : 'My Vehicle'}
+          currentMileage={vehicles[0]?.mileage || 0}
+          visible={addMaintModal}
+          onClose={() => setAddMaintModal(false)}
+        />
+      )}
+      {addNoteModal && <NoteEditorModal note={null} visible={addNoteModal} onClose={() => setAddNoteModal(false)} />}
+      {addReminderModal && <AddReminderModal visible={addReminderModal} onClose={() => setAddReminderModal(false)} />}
 
       {/* Interactive Mascot Tour Walkthrough */}
-      <MascotTourModal visible={showTourModal} onClose={() => setShowTourModal(false)} />
+      {showTourModal && <MascotTourModal visible={showTourModal} onClose={() => setShowTourModal(false)} />}
+
+      {/* Boot Loading Overlay (Fades out smoothly on top of persistent view tree) */}
+      {isBootLoading && (
+        <PanglyLoadingScreen onFinish={() => setIsBootLoading(false)} />
+      )}
     </SafeAreaView>
   );
 };

@@ -66,18 +66,23 @@ export const InteractiveOnboarding: React.FC<InteractiveOnboardingProps> = ({
 
   useEffect(() => {
     let isMounted = true;
-    checkDeviceAuthCapabilities().then((caps) => {
-      if (!isMounted) return;
-      setDeviceAuth(caps);
-      if (caps.supportsFingerprint || caps.supportsFaceRecognition) {
-        setSelectedMethod('device_biometrics');
-      } else {
-        setSelectedMethod('device_passcode');
-      }
-    }).catch(() => {});
+    const timer = setTimeout(() => {
+      checkDeviceAuthCapabilities()
+        .then((caps) => {
+          if (!isMounted) return;
+          setDeviceAuth(caps);
+          if (caps.supportsFingerprint || caps.supportsFaceRecognition) {
+            setSelectedMethod('device_biometrics');
+          } else {
+            setSelectedMethod('device_passcode');
+          }
+        })
+        .catch(() => {});
+    }, 400);
 
     return () => {
       isMounted = false;
+      clearTimeout(timer);
     };
   }, []);
 
