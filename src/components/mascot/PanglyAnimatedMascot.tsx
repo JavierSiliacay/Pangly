@@ -1,17 +1,9 @@
 // src/components/mascot/PanglyAnimatedMascot.tsx
 
 import React from 'react';
-import { View, Image, StyleSheet, ViewStyle, ImageStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle, ImageStyle } from 'react-native';
 import { MascotMood } from '../../engine/mascotStateMachine';
-
-// Static require mappings for animated GIF assets
-const GIF_ASSETS = {
-  waving: require('../../../assets/pangolin/pangly_waving.gif'),
-  idle: require('../../../assets/pangolin/pangly_idle.gif'),
-  thinking: require('../../../assets/pangolin/pangly_thinking.gif'),
-  shield: require('../../../assets/pangolin/pangly_shield.gif'),
-  celebrate: require('../../../assets/pangolin/pangly_celebrate.gif'),
-};
+import { PanglyNpcPuppet } from './PanglyNpcPuppet';
 
 export interface PanglyAnimatedMascotProps {
   mood?: MascotMood | 'searching' | 'sleep' | 'compact' | 'awake' | 'locked' | 'celebrate' | 'waving';
@@ -25,49 +17,45 @@ const PanglyAnimatedMascotComponent: React.FC<PanglyAnimatedMascotProps> = ({
   mood = 'idle',
   size = 140,
   style,
-  imageStyle,
   isTalking = false,
 }) => {
-  // Select active GIF loop based on mood / action (Default: calm ownly_idle.gif)
-  let activeGif = GIF_ASSETS.idle;
+  // Normalize mood to MascotMood for PanglyNpcPuppet
+  let mappedMood: MascotMood = 'idle';
 
   if (mood === 'thinking' || mood === 'searching' || mood === 'confused' || mood === 'concerned') {
-    activeGif = GIF_ASSETS.thinking;
+    mappedMood = 'thinking';
   } else if (mood === 'shield_guard' || mood === 'sleeping' || mood === 'sleep' || mood === 'locked') {
-    activeGif = GIF_ASSETS.shield;
+    mappedMood = 'shield_guard';
   } else if (mood === 'celebrate') {
-    activeGif = GIF_ASSETS.celebrate;
-  } else if (mood === 'waving' || mood === 'welcome' || (isTalking && mood === 'talking')) {
-    activeGif = GIF_ASSETS.waving;
+    mappedMood = 'celebrate';
+  } else if (mood === 'waving' || mood === 'welcome') {
+    mappedMood = 'waving';
+  } else if (isTalking || mood === 'talking') {
+    mappedMood = 'talking';
   } else {
-    // Default calm, idle companion state
-    activeGif = GIF_ASSETS.idle;
+    mappedMood = 'idle';
   }
 
   return (
     <View style={[styles.container, { width: size, height: size }, style]}>
-      <Image
-        source={activeGif}
-        style={[
-          styles.gifImage,
-          { width: size, height: size },
-          imageStyle,
-        ]}
-        resizeMode="contain"
+      <PanglyNpcPuppet
+        mood={mappedMood}
+        size={size}
+        viseme={isTalking ? 'SMILE' : 'REST'}
+        showGlow={false}
       />
     </View>
   );
 };
 
-// Strict memoization: NEVER re-render or restart GIF decoding when parent text/typing state changes
+// Strict memoization: Only re-render when mood or size actually changes
 export const PanglyAnimatedMascot = React.memo(
   PanglyAnimatedMascotComponent,
   (prev, next) =>
     prev.mood === next.mood &&
     prev.size === next.size &&
     prev.isTalking === next.isTalking &&
-    prev.style === next.style &&
-    prev.imageStyle === next.imageStyle
+    prev.style === next.style
 );
 
 export const OwnlyAnimatedMascot = PanglyAnimatedMascot;
@@ -77,7 +65,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  gifImage: {
-    backgroundColor: 'transparent',
-  },
 });
+

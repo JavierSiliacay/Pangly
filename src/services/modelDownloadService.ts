@@ -3,6 +3,7 @@
 // NOTE: All user-facing strings use non-technical language per Pangly's UI copy policy.
 // No model names, file formats, or library names are ever shown to the user.
 
+import { AppState, AppStateStatus } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -188,6 +189,21 @@ async function downloadModel(
         lastBytes = 0;
       }
 
+      let activeDownloadResumable: FileSystem.DownloadResumable | null = null;
+
+      const appStateSubscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
+        if (nextAppState === 'background' || nextAppState === 'inactive') {
+          if (activeDownloadResumable) {
+            try {
+              const savableData = activeDownloadResumable.savable();
+              await AsyncStorage.setItem(resumeKey, JSON.stringify(savableData));
+            } catch (e) {
+              // ignore
+            }
+          }
+        }
+      });
+
       const downloadResumable = FileSystem.createDownloadResumable(
         model.url,
         destPath,
@@ -228,9 +244,17 @@ async function downloadModel(
         parsedResumeData?.resumeData
       );
 
-      const result = parsedResumeData && parsedResumeData.resumeData
-        ? await downloadResumable.resumeAsync()
-        : await downloadResumable.downloadAsync();
+      activeDownloadResumable = downloadResumable;
+
+      let result: FileSystem.FileSystemDownloadResult | undefined;
+      try {
+        result = parsedResumeData && parsedResumeData.resumeData
+          ? await downloadResumable.resumeAsync()
+          : await downloadResumable.downloadAsync();
+      } finally {
+        appStateSubscription.remove();
+        activeDownloadResumable = null;
+      }
 
       if (!result) {
         throw new Error('Download returned no result');

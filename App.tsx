@@ -19,6 +19,7 @@ import { UniversalAddModal } from './src/components/UniversalAddModal';
 
 import { PanglyLoadingScreen } from './src/components/PanglyLoadingScreen';
 import { MascotTourModal } from './src/components/mascot/MascotTourModal';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 
 // Screens
 import { InteractiveOnboarding } from './src/screens/Onboarding/InteractiveOnboarding';
@@ -170,9 +171,11 @@ const MainAppContent: React.FC = () => {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <VaultProvider>
-        <MainAppContent />
-      </VaultProvider>
+      <ErrorBoundary>
+        <VaultProvider>
+          <MainAppContent />
+        </VaultProvider>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }

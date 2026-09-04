@@ -20,7 +20,6 @@ import {
   cancelDownload,
   OverallProgress,
 } from '../services/modelDownloadService';
-import { initLlamaEngine } from '../engine/llamaEngine';
 
 const { width } = Dimensions.get('window');
 
